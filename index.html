@@ -1,0 +1,80 @@
+<script src="https://cdn.jsdelivr.net/gh/netizenorg/netnet-standard-library/build/nn.min.js?v=10"></script>
+<script src="https://unpkg.com/tone"></script>
+<script>
+/* global nn, Tone */
+let synth, scale
+let step = 0
+
+function toggleMusic () {
+  if (Tone.Transport.state === 'started') {
+    Tone.Transport.stop()
+  } else {
+    Tone.Transport.start()
+  }
+}
+  
+function playScale (time) {
+  const note = scale[step]
+  synth.triggerAttackRelease(note, '8n', time)
+  step++
+  if (step >= scale.length) step = 0
+}
+
+function setup() {
+  // randomly choose the root note && mode to generate a scale
+  const key = nn.random(nn.notes) 
+  const root = key + 4
+  const modes = ['major', 'minor']
+  const mode = nn.random(modes)
+  scale = nn.createScale(root, mode)
+  // set the speed (how many quarter notes in a minute)
+  Tone.Transport.bpm.value = 120
+  // set the loop, run every 8th note (ie. twice per quarter note)
+  new Tone.Loop(playScale, '8n').start()
+  
+  // setup body element && button
+  nn.get('body')
+    .css({
+      height: '100vh',
+      userSelect: 'none',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: '1rem'
+    })
+  
+  nn.create('button')
+    .content(`start/stop the ${key} ${mode} scale`)
+    .addTo('body')
+    .on('click', toggleMusic)
+  nn.create('button')
+    .content(`start/stop the ${key} ${mode} scale`)
+    .addTo('body')
+    .on('click', toggleMusic)
+  nn.create('button')
+    .content(`start/stop the ${key} ${mode} scale`)
+    .addTo('body')
+    .on('click', toggleMusic)
+  nn.create('button')
+    .content(`start/stop the ${key} ${mode} scale`)
+    .addTo('body')
+    .on('click', toggleMusic)
+  nn.create('button')
+    .content(`start/stop the ${key} ${mode} scale`)
+    .addTo('body')
+    .on('click', toggleMusic)
+  nn.create('button')
+    .content(`start/stop the ${key} ${mode} scale`)
+    .addTo('body')
+    .on('click', toggleMusic)
+  
+  // setup synthesizer
+  synth = new Tone.Synth({
+    volume: -12,
+    oscillator: { type: 'square' }
+  }).toDestination()
+}
+
+nn.on('load', setup)
+</script>
