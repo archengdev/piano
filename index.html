@@ -2,78 +2,58 @@
 <script src="https://unpkg.com/tone"></script>
 <script>
 /* global nn, Tone */
-let synth, scale
-let step = 0
-
-function toggleMusic () {
-  if (Tone.Transport.state === 'started') {
-    Tone.Transport.stop()
-  } else {
-    Tone.Transport.start()
-  }
-}
-  
-function playScale (time) {
-  const note = scale[step]
-  synth.triggerAttackRelease(note, '8n', time)
-  step++
-  if (step >= scale.length) step = 0
-}
-
 function setup() {
-  // randomly choose the root note && mode to generate a scale
-  const key = nn.random(nn.notes) 
-  const root = key + 4
-  const modes = ['major', 'minor']
-  const mode = nn.random(modes)
-  scale = nn.createScale(root, mode)
-  // set the speed (how many quarter notes in a minute)
-  Tone.Transport.bpm.value = 120
-  // set the loop, run every 8th note (ie. twice per quarter note)
-  new Tone.Loop(playScale, '8n').start()
-  
-  // setup body element && button
+  Tone.Transport.bpm.value = nn.random([80,100,120,140,160])
+
   nn.get('body')
     .css({
       height: '100vh',
       userSelect: 'none',
       display: 'flex',
-      flexDirection: 'column',
+      flexWrap: 'wrap',
       justifyContent: 'center',
       alignItems: 'center',
-      gap: '1rem'
+      gap: '6.5rem',
     })
+
+  const modes = ['major', 'minor']
+  for (const key of nn.notes) {
+    for (const mode of modes) {
+      createSynthPlayer(key, mode)
+    }
+  }
+}
   
-  nn.create('button')
-    .content(`start/stop the ${key} ${mode} scale`)
-    .addTo('body')
-    .on('click', toggleMusic)
-  nn.create('button')
-    .content(`start/stop the ${key} ${mode} scale`)
-    .addTo('body')
-    .on('click', toggleMusic)
-  nn.create('button')
-    .content(`start/stop the ${key} ${mode} scale`)
-    .addTo('body')
-    .on('click', toggleMusic)
-  nn.create('button')
-    .content(`start/stop the ${key} ${mode} scale`)
-    .addTo('body')
-    .on('click', toggleMusic)
-  nn.create('button')
-    .content(`start/stop the ${key} ${mode} scale`)
-    .addTo('body')
-    .on('click', toggleMusic)
-  nn.create('button')
-    .content(`start/stop the ${key} ${mode} scale`)
-    .addTo('body')
-    .on('click', toggleMusic)
+function createSynthPlayer(key, mode) {
+  const root = key + 4
+  const scale = nn.createScale(root, mode)
   
-  // setup synthesizer
-  synth = new Tone.Synth({
+  // get synth
+  const synth = new Tone.Synth({
     volume: -12,
-    oscillator: { type: 'square' }
+    oscillator: { type: nn.random(['square', 'triangle', 'sine', 'sawtooth']) }
   }).toDestination()
+
+  let step = 0
+  let speed = nn.random(['4', '8n', '16n', '32n'])
+  const loop = new Tone.Loop((time) => 
+  {synth.triggerAttackRelease(scale[step], speed, time)
+   step = (step + 1) % 8}, speed).start()
+  loop.mute = true
+
+  // create button to start/stop
+  const button = nn.create('button')
+    .content(`${key} ${mode}`)
+    .css({
+      backgroundColor: 'lightgray',
+    })
+    .addTo('body')
+    .on('click', 
+    () => {
+      Tone.Transport.start()
+      loop.mute = !loop.mute
+      button.css('backgroundColor', loop.mute ? 'lightgray' : 'green')
+    })
 }
 
 nn.on('load', setup)
